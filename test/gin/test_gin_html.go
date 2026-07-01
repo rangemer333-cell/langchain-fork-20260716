@@ -33,20 +33,21 @@ func RequestInfo() gin.HandlerFunc {
 
 var port int
 
+func queryHandler(c *gin.Context) {
+	c.HTML(http.StatusOK, "index.tmpl", gin.H{
+		"title": "Gin HTML模板示例",
+	})
+	c.JSON(http.StatusOK, map[string]interface{}{
+		"code": 1,
+		"msg":  c.FullPath(),
+	})
+}
+
 func setupHttp() {
 	engine := gin.Default()
 	engine.LoadHTMLGlob("templates/*")
 	engine.Use(RequestInfo())
-	engine.GET("/query", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.tmpl", gin.H{
-			"title": "Gin HTML模板示例",
-		})
-		c.JSON(http.StatusOK, map[string]interface{}{
-			"code": 1,
-			"msg":  c.FullPath(),
-		})
-
-	})
+	engine.GET("/query", queryHandler)
 	var err error
 	port, err = verifier.GetFreePort()
 	if err != nil {
@@ -78,7 +79,7 @@ func main() {
 	// verify trace
 	verifier.WaitAndAssertTraces(func(stubs []tracetest.SpanStubs) {
 		verifier.VerifyHttpClientAttributes(stubs[0][0], "GET", "GET", "http://127.0.0.1:"+strconv.Itoa(port)+"/query", "http", "1.1", "tcp", "ipv4", "", "127.0.0.1:"+strconv.Itoa(port), 200, 0, int64(port))
-		verifier.VerifyHttpServerAttributes(stubs[0][1], "GET /query", "GET", "http", "tcp", "ipv4", "", "127.0.0.1:"+strconv.Itoa(port), "Go-http-client/1.1", "http", "/query", "", "/query", 200)
+		verifier.VerifyHttpServerAttributes(stubs[0][1], "main.queryHandler", "GET", "http", "tcp", "ipv4", "", "127.0.0.1:"+strconv.Itoa(port), "Go-http-client/1.1", "http", "/query", "", "main.queryHandler", 200)
 		if stubs[0][1].Parent.TraceID().String() != stubs[0][0].SpanContext.TraceID().String() {
 			log.Fatal("span 1 should be child of span 0")
 		}

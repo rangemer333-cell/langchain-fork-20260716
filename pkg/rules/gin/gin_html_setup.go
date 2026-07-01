@@ -32,7 +32,10 @@ func htmlOnEnter(call api.CallContext, c *gin.Context, code int, name string, ob
 		return
 	}
 	lcs := trace.LocalRootSpanFromGLS()
-	if lcs != nil && c.FullPath() != "" && c.Request != nil && c.Request.URL != nil && (c.FullPath() != c.Request.URL.Path) {
-		lcs.SetName(c.FullPath())
+	if lcs == nil {
+		return
+	}
+	if handlerName := c.HandlerName(); handlerName != "" {
+		lcs.SetName(handlerName)
 	}
 }

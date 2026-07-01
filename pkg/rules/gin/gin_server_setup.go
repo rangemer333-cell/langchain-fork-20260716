@@ -32,7 +32,12 @@ func nextOnEnter(call api.CallContext, c *gin.Context) {
 		return
 	}
 	lcs := trace.LocalRootSpanFromGLS()
-	if lcs != nil && c.FullPath() != "" && c.Request != nil && c.Request.URL != nil && (c.FullPath() != c.Request.URL.Path) {
-		lcs.SetName(c.FullPath())
+	if lcs == nil {
+		return
+	}
+	// Override the default route-template span name with the handler function
+	// name so traces point at the code that actually served the request.
+	if handlerName := c.HandlerName(); handlerName != "" {
+		lcs.SetName(handlerName)
 	}
 }
