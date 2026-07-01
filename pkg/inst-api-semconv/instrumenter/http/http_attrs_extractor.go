@@ -134,14 +134,22 @@ func (h *HttpServerAttrsExtractor[REQUEST, RESPONSE, GETTER1, GETTER2, GETTER3])
 	span := trace.SpanFromContext(context)
 	localRootSpan, ok := span.(sdktrace.ReadOnlySpan)
 	if ok && span.IsRecording() {
-		route := h.Base.HttpGetter.GetHttpRoute(request)
-		if !strings.Contains(localRootSpan.Name(), route) {
-			route = localRootSpan.Name()
+		// Framework plugins (e.g. gin's nextOnEnter) may set http.route on the
+		// local root span to the matched route template when the span name is
+		// overridden with a non-route value (such as the handler function name).
+		// Respect that pre-set value instead of deriving a fallback from the
+		// span name, which would otherwise violate the OTel semconv requirement
+		// that http.route be the matched route template (e.g. /user/:name).
+		if !hasAttribute(localRootSpan.Attributes(), semconv.HTTPRouteKey) {
+			route := h.Base.HttpGetter.GetHttpRoute(request)
+			if !strings.Contains(localRootSpan.Name(), route) {
+				route = localRootSpan.Name()
+			}
+			attributes = append(attributes, attribute.KeyValue{
+				Key:   semconv.HTTPRouteKey,
+				Value: attribute.StringValue(route),
+			})
 		}
-		attributes = append(attributes, attribute.KeyValue{
-			Key:   semconv.HTTPRouteKey,
-			Value: attribute.StringValue(route),
-		})
 	}
 	if h.Base.AttributesFilter != nil {
 		attributes = h.Base.AttributesFilter(attributes)
@@ -151,4 +159,14 @@ func (h *HttpServerAttrsExtractor[REQUEST, RESPONSE, GETTER1, GETTER2, GETTER3])
 
 func (h *HttpServerAttrsExtractor[REQUEST, RESPONSE, GETTER1, GETTER2, GETTER3]) GetSpanKey() attribute.Key {
 	return utils.HTTP_SERVER_KEY
+}
+
+// hasAttribute reports whether attrs contains a value for the given key.
+func hasAttribute(attrs []attribute.KeyValue, key attribute.Key) bool {
+	for _, a := range attrs {
+		if a.Key == key {
+			return true
+		}
+	}
+	return false
 }

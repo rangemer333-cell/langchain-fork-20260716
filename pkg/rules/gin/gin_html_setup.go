@@ -19,6 +19,7 @@ import (
 
 	"github.com/alibaba/loongsuite-go/pkg/api"
 	"go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.30.0"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,5 +38,8 @@ func htmlOnEnter(call api.CallContext, c *gin.Context, code int, name string, ob
 	}
 	if handlerName := c.HandlerName(); handlerName != "" {
 		lcs.SetName(handlerName)
+	}
+	if route := c.FullPath(); route != "" {
+		lcs.SetAttributes(semconv.HTTPRouteKey.String(route))
 	}
 }

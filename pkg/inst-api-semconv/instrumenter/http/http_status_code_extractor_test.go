@@ -39,6 +39,7 @@ func (ts *testSpan) SetAttributes(kv ...attribute.KeyValue) {
 type testReadOnlySpan struct {
 	sdktrace.ReadWriteSpan
 	isRecording bool
+	attrs       []attribute.KeyValue
 }
 
 func (t *testReadOnlySpan) Name() string {
@@ -47,6 +48,10 @@ func (t *testReadOnlySpan) Name() string {
 
 func (t *testReadOnlySpan) IsRecording() bool {
 	return t.isRecording
+}
+
+func (t *testReadOnlySpan) Attributes() []attribute.KeyValue {
+	return t.attrs
 }
 
 type customizedNetHttpAttrsGetter struct {

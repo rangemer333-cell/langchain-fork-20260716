@@ -443,3 +443,24 @@ func TestNonRecordingSpan(t *testing.T) {
 		t.Fatalf("wrong network peer port")
 	}
 }
+
+func TestHttpServerExtractorEndRespectsPresetRoute(t *testing.T) {
+	httpServerExtractor := HttpServerAttrsExtractor[testRequest, testResponse, httpServerAttrsGetter, networkAttrsGetter, urlAttrsGetter]{
+		Base:             HttpCommonAttrsExtractor[testRequest, testResponse, httpServerAttrsGetter, networkAttrsGetter]{},
+		NetworkExtractor: net.NetworkAttrsExtractor[testRequest, testResponse, networkAttrsGetter]{},
+		UrlExtractor:     net.UrlAttrsExtractor[testRequest, testResponse, urlAttrsGetter]{},
+	}
+	attrs := make([]attribute.KeyValue, 0)
+	ctx := context.Background()
+	presetRoute := semconv.HTTPRouteKey.String("/user/:name")
+	ctx = trace.ContextWithSpan(ctx, &testReadOnlySpan{
+		isRecording: true,
+		attrs:       []attribute.KeyValue{presetRoute},
+	})
+	attrs, _ = httpServerExtractor.OnEnd(attrs, ctx, testRequest{}, testResponse{}, nil)
+	for _, a := range attrs {
+		if a.Key == semconv.HTTPRouteKey {
+			t.Fatalf("http.route should not be overridden when already set on the span, got %s", a.Value.AsString())
+		}
+	}
+}
