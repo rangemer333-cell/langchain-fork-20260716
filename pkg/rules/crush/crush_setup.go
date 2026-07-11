@@ -45,9 +45,9 @@ func coordinatorRunOnEnter(call api.CallContext, c interface{}, ctx context.Cont
 	}
 	request := crushAgentRequest{
 		operationName: OperationInvokeAgent,
-		spanKind:      ai.GenAISpanKindWorkflow,
+		spanKind:      ai.GenAISpanKindAgent,
 		sessionID:     sessionID,
-		userMessage:   truncate(prompt, 4096),
+		userMessage:   prompt,
 	}
 	instrumentedCtx := crushAgentInstrumenter.Start(ctx, request)
 	data := make(map[string]interface{}, 2)
@@ -94,9 +94,9 @@ func sessionAgentRunOnEnter(call api.CallContext, a interface{}, ctx context.Con
 	}
 	request := crushAgentRequest{
 		operationName: OperationInvokeAgent,
-		spanKind:      ai.GenAISpanKindWorkflow,
+		spanKind:      ai.GenAISpanKindAgent,
 		sessionID:     readStringField(sessionAgentCall, "SessionID"),
-		userMessage:   truncate(readStringField(sessionAgentCall, "Prompt"), 4096),
+		userMessage:   readStringField(sessionAgentCall, "Prompt"),
 		maxTokens:     readInt64Field(sessionAgentCall, "MaxOutputTokens"),
 	}
 	if temp := readFloat64PtrField(sessionAgentCall, "Temperature"); temp != nil {
@@ -151,9 +151,9 @@ func hookedToolRunOnEnter(call api.CallContext, h interface{}, ctx context.Conte
 	}
 	request := crushToolRequest{
 		operationName: OperationExecuteTool,
-		spanKind:      ai.GenAISpanKindWorkflow,
+		spanKind:      ai.GenAISpanKindTool,
 		toolName:      toolCall.Name,
-		toolInput:     truncate(toolCall.Input, 4096),
+		toolInput:     toolCall.Input,
 	}
 	instrumentedCtx := crushToolInstrumenter.Start(ctx, request)
 	data := make(map[string]interface{}, 2)
@@ -174,7 +174,7 @@ func hookedToolRunOnExit(call api.CallContext, resp fantasy.ToolResponse, err er
 	if ctx == nil {
 		return
 	}
-	request.toolOutput = truncate(resp.Content, 4096)
+	request.toolOutput = resp.Content
 	if resp.IsError {
 		request.isError = true
 	}

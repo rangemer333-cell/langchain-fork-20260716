@@ -114,8 +114,8 @@ func main() {
 					continue
 				}
 				spanKind := verifier.GetAttribute(span.Attributes, "gen_ai.span.kind").AsString()
-				verifier.Assert(spanKind == "workflow",
-					"Expected gen_ai.span.kind=workflow, got %s", spanKind)
+				verifier.Assert(spanKind == "agent",
+					"Expected gen_ai.span.kind=agent, got %s", spanKind)
 				verifier.Assert(span.Name == "invoke_agent",
 					"Expected span name invoke_agent, got %s", span.Name)
 				verifier.Assert(span.SpanKind == oteltrace.SpanKindClient,

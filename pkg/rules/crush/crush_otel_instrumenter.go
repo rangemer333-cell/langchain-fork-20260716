@@ -16,6 +16,7 @@ package crush
 
 import (
 	"context"
+	"unicode/utf8"
 
 	"github.com/alibaba/loongsuite-go/pkg/inst-api-semconv/instrumenter/ai"
 	"github.com/alibaba/loongsuite-go/pkg/inst-api/instrumenter"
@@ -39,7 +40,7 @@ func (crushAgentCommonGetter) GetAISystem(request crushAgentRequest) string {
 
 func (crushAgentCommonGetter) GetGenAISpanKind(request crushAgentRequest) ai.GenAISpanKind {
 	if request.spanKind == "" {
-		return ai.GenAISpanKindWorkflow
+		return ai.GenAISpanKindAgent
 	}
 	return request.spanKind
 }
@@ -130,7 +131,7 @@ func (crushToolCommonGetter) GetAISystem(request crushToolRequest) string {
 
 func (crushToolCommonGetter) GetGenAISpanKind(request crushToolRequest) ai.GenAISpanKind {
 	if request.spanKind == "" {
-		return ai.GenAISpanKindWorkflow
+		return ai.GenAISpanKindTool
 	}
 	return request.spanKind
 }
@@ -185,19 +186,18 @@ func BuildCrushToolInstrumenter() instrumenter.Instrumenter[crushToolRequest, cr
 		BuildInstrumenter()
 }
 
-// truncate caps a string at maxBytes bytes (UTF-8 safe) to avoid oversized
-// span attributes.
+// truncate caps a string at maxBytes bytes (UTF-8 safe: never splits a
+// multi-byte rune) to avoid oversized span attributes.
 func truncate(s string, maxBytes int) string {
 	if len(s) <= maxBytes {
 		return s
 	}
-	// Walk rune-by-rune so we don't split a multi-byte sequence.
-	n := 0
-	for i := range s {
-		if n >= maxBytes {
-			return s[:i] + "...[truncated]"
-		}
-		n++
+	// Back off until we are at a rune boundary so we don't split a
+	// multi-byte sequence. maxBytes is treated as a byte cap, not a rune
+	// count.
+	end := maxBytes
+	for end > 0 && !utf8.RuneStart(s[end]) {
+		end--
 	}
-	return s
+	return s[:end] + "...[truncated]"
 }
