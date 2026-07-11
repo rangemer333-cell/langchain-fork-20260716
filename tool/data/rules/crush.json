@@ -1,0 +1,26 @@
+[
+  {
+    "ImportPath": "github.com/charmbracelet/crush/internal/agent",
+    "Function": "Run",
+    "ReceiverType": "\\*coordinator",
+    "OnEnter": "coordinatorRunOnEnter",
+    "OnExit": "coordinatorRunOnExit",
+    "Path": "github.com/alibaba/loongsuite-go/pkg/rules/crush"
+  },
+  {
+    "ImportPath": "github.com/charmbracelet/crush/internal/agent",
+    "Function": "Run",
+    "ReceiverType": "\\*sessionAgent",
+    "OnEnter": "sessionAgentRunOnEnter",
+    "OnExit": "sessionAgentRunOnExit",
+    "Path": "github.com/alibaba/loongsuite-go/pkg/rules/crush"
+  },
+  {
+    "ImportPath": "github.com/charmbracelet/crush/internal/agent",
+    "Function": "Run",
+    "ReceiverType": "\\*hookedTool",
+    "OnEnter": "hookedToolRunOnEnter",
+    "OnExit": "hookedToolRunOnExit",
+    "Path": "github.com/alibaba/loongsuite-go/pkg/rules/crush"
+  }
+]
